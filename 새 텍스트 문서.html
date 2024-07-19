@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>달리기 시간 예측기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>달리기 시간 예측기</h1>
+    <label for="distance">달린 거리 (킬로미터):</label>
+    <input type="number" id="distance" step="0.01">
+    <label for="time">달린 시간 (시:분:초):</label>
+    <input type="text" id="time" placeholder="예: 1:29:30">
+    <button onclick="calculatePace()">페이스 계산하기</button>
+    <div class="result" id="paceResult"></div>
+    <hr>
+    <label for="treadmillSpeed">계산된 트레드밀 속도 (킬로미터/시간):</label>
+    <input type="number" id="treadmillSpeed" step="0.01" readonly>
+    <button onclick="predictTimes()">예상 시간 계산하기</button>
+    <div class="result" id="predictionResult"></div>
+</div>
+
+<script>
+    function parseTimeString(timeString) {
+        const timeParts = timeString.split(':').map(parseFloat);
+        if (timeParts.length !== 3 || timeParts.some(isNaN)) {
+            alert('유효한 시간을 시:분:초 형식으로 입력하세요.');
+            return null;
+        }
+        return timeParts;
+    }
+
+    function calculatePace() {
+        const distance = parseFloat(document.getElementById('distance').value);
+        const timeString = document.getElementById('time').value;
+
+        const timeParts = parseTimeString(timeString);
+        if (!timeParts) return;
+
+        const [hours, minutes, seconds] = timeParts;
+
+        if (isNaN(distance) || distance <= 0 || (hours <= 0 && minutes <= 0 && seconds <= 0)) {
+            alert('유효한 값을 입력하세요.');
+            return;
+        }
+
+        const totalTimeInMinutes = (hours * 60) + minutes + (seconds / 60); // 총 시간 (분 단위)
+        const pace = totalTimeInMinutes / distance; // 킬로미터당 시간 (분 단위)
+
+        const treadmillSpeed = 60 / pace; // 트레드밀 속도 (킬로미터/시간)
+        document.getElementById('treadmillSpeed').value = treadmillSpeed.toFixed(2);
+        document.getElementById('paceResult').innerText = `계산된 페이스: ${Math.floor(pace)}분 ${Math.round((pace % 1) * 60)}초/km, 트레드밀 속도: ${treadmillSpeed.toFixed(2)} km/h`;
+    }
+
+    function predictTimes() {
+        const treadmillSpeed = parseFloat(document.getElementById('treadmillSpeed').value);
+
+        if (isNaN(treadmillSpeed) || treadmillSpeed <= 0) {
+            alert('유효한 트레드밀 속도를 입력하세요.');
+            return;
+        }
+
+        const distances = {
+            "10km": 10,
+            "하프마라톤 (21.1km)": 21.1,
+            "마라톤 (42.195km)": 42.195
+        };
+
+        let predictionResult = "예상 시간:<br>";
+
+        for (const [key, value] of Object.entries(distances)) {
+            const timeInMinutes = (value / treadmillSpeed) * 60;
+            const hours = Math.floor(timeInMinutes / 60);
+            const minutes = Math.floor(timeInMinutes % 60);
+            const seconds = Math.round((timeInMinutes % 1) * 60);
+
+            predictionResult += `${key}: ${hours}시간 ${minutes}분 ${seconds}초<br>`;
+        }
+
+        document.getElementById('predictionResult').innerHTML = predictionResult;
+    }
+</script>
+
+</body>
+</html>
